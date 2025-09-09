@@ -14,11 +14,11 @@
                     <ul class="navbar-nav">
                         <li class="nav-item">
                             <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'halaman_admin.php') ? 'active' : ''; ?>"
-                                href="../halaman_admin.php"><i class="bi bi-house-door-fill"></i> Home</a>
+                                href="../halaman_admin.php"><i class="bi bi-house-door-fill"></i> Beranda</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'customerr.php') ? 'active' : ''; ?>"
-                                href="customerr.php"><i class="bi bi-people-fill"></i> User</a>
+                                href="customerr.php"><i class="bi bi-bar-chart-steps"></i> Data</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'hero.php') ? 'active' : ''; ?>"
@@ -33,8 +33,8 @@
                                 Penjualan
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end mt-2">
-                                <li><a class="dropdown-item" href="rekap_pesanan_lunas.php"><i class="bi bi-gear-fill"></i> Penjualan lunas</a></li>
-                                <li><a class="dropdown-item" href="rekap_penjualan.php"><i class="bi bi-box-arrow-left"></i> Penjualan Belum Lunas</a></li>
+                                <li><a class="dropdown-item" href="rekap_pesanan_lunas.php"> Lunas</a></li>
+                                <li><a class="dropdown-item" href="rekap_penjualan.php"> Belum Lunas</a></li>
                             </ul>
                         </li>
 
@@ -43,8 +43,6 @@
                                 <?php echo $_SESSION['username']; ?>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end mt-2">
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-person-circle"></i> Profile</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-gear-fill"></i> Settings</a></li>
                                 <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-left"></i> Logout</a></li>
                             </ul>
                         </li>
@@ -85,5 +83,5 @@
                 /* hilangkan background biru kotak */
             }
         </style>
-
+        <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>

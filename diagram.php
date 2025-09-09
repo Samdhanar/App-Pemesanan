@@ -24,7 +24,7 @@ $q_menu = "
     SELECT m.nama, SUM(r.jumlah) AS total_jual
     FROM rekap_penjualan r
     JOIN menu m ON r.product_id = m.id
-    WHERE $where
+    WHERE $where 
     GROUP BY r.product_id
     ORDER BY total_jual DESC
     LIMIT 5

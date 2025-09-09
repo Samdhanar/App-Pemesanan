@@ -4,15 +4,20 @@ include "koneksi/connect_db.php";
 
 // --- Notifikasi sukses ---
 if (isset($_SESSION['notif'])) {
-  echo '<div class="alert alert-success alert-dismissible fade show" role="alert">
-            <strong>Sukses!</strong> ' . $_SESSION['notif'] . '
+  // default type = info
+  $type = $_SESSION['notif_type'] ?? 'info';
+  $title = ($type === 'success') ? 'Sukses!' : (($type === 'danger') ? 'Gagal!' : 'Info');
+
+  echo '<div class="alert alert-' . $type . ' alert-dismissible fade show" role="alert">
+            <strong>' . $title . '</strong> ' . $_SESSION['notif'] . '
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>';
-  unset($_SESSION['notif']);
+        </div>';
+
+  unset($_SESSION['notif'], $_SESSION['notif_type']);
 }
 
 // ambil semua data produk 
-$query = mysqli_query($db, "SELECT id, nama, harga, gambar, kategori FROM menu ORDER BY id DESC");
+$query = mysqli_query($db, "SELECT id, nama, harga, gambar, kategori, stok FROM menu ORDER BY id DESC");
 $produk = [];
 while ($row = mysqli_fetch_assoc($query)) {
   $produk[] = $row;
@@ -26,6 +31,8 @@ while ($row = mysqli_fetch_assoc($query)) {
   <title>Elkusa Cafe</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="icon" type="image/png" href="assets/image/logo_cafe.png">
+
   <style>
     body {
       background: #f8f9fa;
@@ -164,7 +171,7 @@ while ($row = mysqli_fetch_assoc($query)) {
       <div class="collapse navbar-collapse justify-content-end" id="navbarNavDropdown">
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link link-dark <?= basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : '' ?>" href="index.php"><i class="bi bi-house-door"></i> Home</a>
+            <a class="nav-link link-dark <?= basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : '' ?>" href="index.php"><i class="bi bi-house-door"></i> Beranda</a>
           </li>
           <li class="nav-item active">
             <a class="nav-link link-dark <?= basename($_SERVER['PHP_SELF']) == 'form_pemesanan.php' ? 'active' : '' ?>" href="form_pemesanan.php"><i class="bi bi-cart3"></i> Pesan</a>
@@ -206,19 +213,24 @@ while ($row = mysqli_fetch_assoc($query)) {
         <div class="row row-cols-2 row-cols-md-4 g-3 mb-4" id="daftarMenu">
           <?php foreach ($produk as $p): ?>
             <div class="col produk-item" data-kategori="<?= strtolower($p['kategori']); ?>">
-              <div class="card produk-card border rounded shadow-sm"
-                onclick="tambahPesanan('<?= $p['id']; ?>','<?= $p['nama']; ?>',<?= $p['harga']; ?>)">
+              <div class="card produk-card border rounded shadow-sm 
+           <?= $p['stok'] <= 0 ? 'opacity-50 pointer-events-none' : '' ?>"
+                <?php if ($p['stok'] > 0): ?>
+                onclick="tambahPesanan('<?= $p['id']; ?>','<?= $p['nama']; ?>',<?= $p['harga']; ?>)"
+                <?php endif; ?>>
                 <img src="koneksi/unggahan/<?= $p['gambar']; ?>" class="card-img-top produk-img" alt="<?= $p['nama']; ?>">
                 <div class="card-body text-center">
-                  <h6 class="card-title"><?= $p['nama']; ?></h6>
+                  <h5 class="card-title"><?= $p['nama']; ?></h5>
                   <p class="text-primary fw-bold">Rp <?= number_format($p['harga'], 0, ',', '.'); ?></p>
+                  <span class="btn <?= $p['stok'] > 0 ? 'bg-primary' : 'bg-danger'; ?> stok-badge d-block w-100 fw-bold text-white">
+                    <?= $p['stok'] > 0 ? 'Stok: ' . $p['stok'] : 'Habis'; ?>
+                  </span>
                 </div>
               </div>
             </div>
-
-
           <?php endforeach; ?>
         </div>
+
 
         <!-- Tabel Pesanan -->
         <table class="table table-bordered mt-4" id="tabelPesanan">
@@ -255,7 +267,6 @@ while ($row = mysqli_fetch_assoc($query)) {
   <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    //tambah menu 
     function tambahPesanan(id, nama, harga) {
       let tabel = document.getElementById("tabelPesanan").querySelector("tbody");
       let existingRow = [...tabel.rows].find(r => r.querySelector("input[name='produk_id[]']").value == id);
@@ -269,25 +280,31 @@ while ($row = mysqli_fetch_assoc($query)) {
 
       let row = tabel.insertRow();
       row.innerHTML = `
-    <td>
-      ${nama}
-      <input type="hidden" name="produk_id[]" value="${id}">
-      <input type="hidden" name="harga_satuan[]" value="${harga}">
-    </td>
-    <td>
-     <input type="number" class="form-control" name="jumlah[]" value="1" min="1" 
-       oninput="hitungTotal(this, ${harga})" required>
-    </td>
-    <td>
-      <input type="number" class="form-control" name="total_harga[]" value="${harga}" readonly>
-    </td>
-    <td>
-      <button type="button" class="btn btn-danger" onclick="hapusBaris(this)">Hapus</button>
-    </td>
-  `;
+  <td>
+    ${nama}
+    <input type="hidden" name="produk_id[]" value="${id}">
+    <input type="hidden" name="harga_satuan[]" value="${harga}">
+  </td>
+  <td>
+    <div class="input-group">
+      <button type="button" class="btn btn-outline-secondary" onclick="ubahJumlah(this, -1, ${harga})">-</button>
+      <input type="number" class="form-control text-center" name="jumlah[]" value="1" min="1" readonly required>
+      <button type="button" class="btn btn-outline-secondary" onclick="ubahJumlah(this, 1, ${harga})">+</button>
+    </div>
+  </td>
+  <td>
+    <input type="number" class="form-control" name="total_harga[]" value="${harga}" readonly>
+  </td>
+  <td>
+    <button type="button" class="btn btn-danger" onclick="hapusBaris(this)">Hapus</button>
+  </td>
+`;
+
 
       updateGrandTotal();
     }
+
+
 
     // Hapus Baris Pesanan 
     function hapusBaris(btn) {
@@ -330,6 +347,22 @@ while ($row = mysqli_fetch_assoc($query)) {
       let jumlah = parseInt(input.value) || 0;
       totalInput.value = jumlah * harga;
       updateGrandTotal();
+    }
+
+
+    function ubahJumlah(button, perubahan, harga) {
+      const input = button.closest(".input-group").querySelector("input[name='jumlah[]']");
+      let jumlah = parseInt(input.value) || 1;
+
+      jumlah += perubahan;
+
+      if (jumlah <= 0) {
+        // Hapus baris jika jumlah dikurangi sampai 0
+        hapusBaris(button);
+      } else {
+        input.value = jumlah;
+        hitungTotal(input, harga);
+      }
     }
 
     //Hitung Total Pesanan

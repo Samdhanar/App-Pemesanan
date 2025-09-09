@@ -32,5 +32,6 @@ if (mysqli_num_rows($result) > 0) {
             exit;
     }
 } else {
-    echo "Username atau password salah!";
+    header("Location: ../login.php?error=1");
+    exit;
 }

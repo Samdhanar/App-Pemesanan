@@ -33,12 +33,20 @@ $result = getHeroTexts($db);
     <title>Kelola Hero Text</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-
+    <link rel="icon" type="image/png" href="assets/image/logo_cafe.png">
     <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        main{
+            flex: 1;
+        }
+
         /* Samakan panjang tombol Edit & Hapus */
         .btn-action {
-            min-width: 90px;
-            /* bisa diubah sesuai kebutuhan */
+            min-width: 90px; /* bisa diubah sesuai kebutuhan */
         }
     </style>
 </head>
@@ -47,7 +55,7 @@ $result = getHeroTexts($db);
 
     <!-- Sidebar -->
     <?php include "header.php"; ?>
-
+<main>
     <div class="container-lg">
         <div class="row">
           <!-- Konten -->
@@ -127,7 +135,12 @@ $result = getHeroTexts($db);
             </div>
         </div>
     </div>
+</main>
 
+    <hr class="mt-5">
+    <footer class="bg-light text-center py-4">
+        <p class="mb-0">© 2025 masdhanar | Elkusa Cafe </p>
+    </footer>
 </body>
 
 </html>

@@ -2,10 +2,11 @@
 include "koneksi/connect_db.php";
 $query = mysqli_query($db, "SELECT * FROM hero_text ORDER BY id ASC");
 $hero_data = [];
-while ($row = mysqli_fetch_assoc($query)) {
+    while ($row = mysqli_fetch_assoc($query)) {
     $hero_data[] = $row;
 }
 ?>
+
 <!doctype html>
 <html lang="en">
 
@@ -15,6 +16,7 @@ while ($row = mysqli_fetch_assoc($query)) {
     <title>Elkusa Cafe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="icon" type="image/png" href="assets/image/logo_cafe.png">
     <style>
         /* Navbar */
         .navbar {
@@ -181,6 +183,109 @@ while ($row = mysqli_fetch_assoc($query)) {
             text-decoration: none;
         }
 
+        /* Modal Produk */
+        .modal-content {
+            border: none;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            border-bottom: none;
+            padding: 15px 20px;
+        }
+
+        .modal-header .modal-title {
+            font-weight: 600;
+            font-size: 1.3rem;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .modal-body img {
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-body p {
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .modal-body strong {
+            color: #0d6efd;
+        }
+
+        .modal-footer {
+            border-top: none;
+            padding: 15px 20px;
+        }
+
+        .modal-footer .btn {
+            border-radius: 30px;
+            padding: 8px 20px;
+        }
+
+        /* Animasi fade & scale modal */
+        .modal.fade .modal-dialog {
+            transform: scale(0.8);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .modal.fade.show .modal-dialog {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* Animasi konten dalam modal */
+        .modal-body img {
+            animation: zoomIn 0.6s ease forwards;
+        }
+
+        .modal-body p,
+        .modal-body h5,
+        .modal-body strong {
+            animation: fadeUp 0.6s ease forwards;
+            animation-delay: 0.2s;
+            opacity: 0;
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                transform: translateY(15px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
         /* Tooltip */
         .whatsapp-tooltip {
             position: absolute;
@@ -222,12 +327,12 @@ while ($row = mysqli_fetch_assoc($query)) {
             <div class="collapse navbar-collapse justify-content-end" id="navbarNavDropdown">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link link-dark <?= basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : '' ?>" href="index.php"><i class="bi bi-house-door"></i> Home</a>
+                        <a class="nav-link link-dark <?= basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : '' ?>" href="index.php"><i class="bi bi-house-door"></i> Beranda</a>
                     </li>
                     <li class="nav-item active">
                         <a class="nav-link link-dark <?= basename($_SERVER['PHP_SELF']) == 'form_pemesanan.php' ? 'active' : '' ?>" href="form_pemesanan.php"><i class="bi bi-cart3"></i> Pesan</a>
                     </li>
-                     <li class="nav-item active">
+                    <li class="nav-item active">
                         <a class="nav-link link-dark <?= basename($_SERVER['PHP_SELF']) == 'login.php' ? 'active' : '' ?>" href="login.php"><i class="bi bi-box-arrow-in-right"></i> Login</a>
                     </li>
                 </ul>
@@ -306,16 +411,43 @@ while ($row = mysqli_fetch_assoc($query)) {
             $produk = mysqli_query($db, "SELECT * FROM menu ORDER BY id DESC");
             if (mysqli_num_rows($produk) > 0) {
                 while ($p = mysqli_fetch_assoc($produk)) { ?>
-                    <div class="col-md-4 col-lg-3 produk-item" data-kategori="<?= strtolower($p['kategori']); ?>">
+                    <div class="col-4 col-md-4 col-lg-3 produk-item" data-kategori="<?= strtolower($p['kategori']); ?>">
                         <div class="card card-produk h-100 shadow-sm">
                             <div class="card-img-container">
-                                <img src="koneksi/unggahan/<?php echo $p['gambar']; ?>" class="card-img-top" alt="<?php echo $p['nama']; ?>">
+                                <!-- Klik gambar buka modal -->
+                                <a href="#" data-bs-toggle="modal" data-bs-target="#modalDetail<?= $p['id']; ?>">
+                                    <img src="koneksi/unggahan/<?php echo $p['gambar']; ?>"
+                                        class="card-img-top"
+                                        alt="<?php echo $p['nama']; ?>">
+                                </a>
                             </div>
                             <div class="card-body text-center">
                                 <h5 class="card-title"><?php echo $p['nama']; ?></h5>
                                 <span class="badge bg-primary harga-badge">
                                     Rp. <?php echo number_format($p['harga'], 0, ',', '.'); ?>
                                 </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Detail Produk -->
+                    <div class="modal fade" id="modalDetail<?= $p['id']; ?>" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title"><?= $p['nama']; ?></h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <img src="koneksi/unggahan/<?= $p['gambar']; ?>" class="img-fluid mb-3" alt="<?= $p['nama']; ?>">
+                                    <p><strong>Harga:</strong> Rp. <?= number_format($p['harga'], 0, ',', '.'); ?></p>
+                                    <p><strong>Kategori:</strong> <?= $p['kategori']; ?></p>
+                                    <p><strong>Deskripsi:</strong><br> <?= $p['deskripsi'] ?? 'Tidak ada deskripsi.'; ?></p>
+                                </div>
+                                <hr class="border border-secondary border-2">
+                                <div class="modal-footer">
+                                    <button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -326,6 +458,7 @@ while ($row = mysqli_fetch_assoc($query)) {
                 </div>
             <?php } ?>
         </div>
+
     </div>
 
     <!--floating whatsapp-->
@@ -335,7 +468,7 @@ while ($row = mysqli_fetch_assoc($query)) {
     </a>
 
     <!-- Footer -->
-    <hr>
+    <hr class="border border-dark border-1">
     <footer class="text-center py-4 mt-5">
         <p class="mb-0">© 2025 masdhanar | Elkusa Cafe </p>
     </footer>

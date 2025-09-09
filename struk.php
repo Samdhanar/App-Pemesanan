@@ -42,7 +42,7 @@ $kembali = $bayar - $total_setelah_diskon;
 ?>
 <!DOCTYPE html>
 <html lang="id">
-
+<link rel="icon" type="image/png" href="assets/image/logo_cafe.png">
 <head>
     <meta charset="UTF-8">
     <title>Cetak Struk</title>

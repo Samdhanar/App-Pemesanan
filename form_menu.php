@@ -15,6 +15,7 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] !== 'admin') {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Tambah Menu</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="assets/image/logo_cafe.png">
     <style>
         .preview-img {
             max-width: 100px;
@@ -57,6 +58,18 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] !== 'admin') {
                             <option value="Makanan">Makanan</option>
                             <option value="Minuman">Minuman</option>
                         </select>
+                    </div>
+
+                    <!-- Tambahan: Deskripsi -->
+                    <div class="mb-3">
+                        <label class="form-label">Deskripsi</label>
+                        <input type="text" name="deskripsi" class="form-control" required>
+                    </div>
+
+                    <!-- Tambahan: Stok -->
+                    <div class="mb-3">
+                        <label class="form-label">Stok</label>
+                        <input type="number" name="stok" class="form-control" min="0" value="0" required>
                     </div>
 
                     <div class="mb-3">

@@ -23,6 +23,44 @@ if (isset($_GET['delete'])) {
     exit;
 }
 
+// ================== PROSES UPDATE PRODUK ==================
+if (isset($_POST['update'])) {
+    $id       = intval($_POST['id']);
+    $nama     = $_POST['nama'];
+    $harga    = $_POST['harga'];
+    $stok     = $_POST['stok'];
+    $deskripsi = $_POST['deskripsi'];
+
+    // Ambil data lama
+    $qOld = mysqli_query($db, "SELECT * FROM menu WHERE id=$id");
+    $produk = mysqli_fetch_assoc($qOld);
+    $gambar  = $produk['gambar'];
+
+    // Jika ada upload gambar baru
+    if (!empty($_FILES['gambar']['name'])) {
+        $targetDir = "koneksi/unggahan/";
+        $fileName  = time() . "_" . basename($_FILES["gambar"]["name"]);
+        $targetFile = $targetDir . $fileName;
+
+        // hapus gambar lama
+        if (file_exists($targetDir . $produk['gambar'])) {
+            unlink($targetDir . $produk['gambar']);
+        }
+
+        move_uploaded_file($_FILES["gambar"]["tmp_name"], $targetFile);
+        $gambar = $fileName;
+    }
+
+    // update database
+    $sql = "UPDATE menu 
+            SET nama='$nama', harga='$harga', stok='$stok', gambar='$gambar', deskripsi='$deskripsi' 
+            WHERE id=$id";
+    mysqli_query($db, $sql);
+
+    header("Location: product_admin.php?msg=updated");
+    exit;
+}
+
 // ================== SEARCH & FILTER KATEGORI ==================
 $search   = isset($_GET['search']) ? trim($_GET['search']) : "";
 $kategori = isset($_GET['kategori']) ? trim($_GET['kategori']) : "";
@@ -42,6 +80,7 @@ $produk = mysqli_query($db, "SELECT * FROM menu $whereSQL ORDER BY id DESC");
 $kategori_list = mysqli_query($db, "SELECT DISTINCT kategori FROM menu WHERE kategori IS NOT NULL AND kategori <> '' ORDER BY kategori ASC");
 ?>
 
+
 <!DOCTYPE html>
 <html lang="id">
 
@@ -50,6 +89,7 @@ $kategori_list = mysqli_query($db, "SELECT DISTINCT kategori FROM menu WHERE kat
     <title>Elkusa Cafe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="icon" type="image/png" href="assets/image/logo_cafe.png">
     <style>
         /* 🔹 Search Box Besar */
         #searchInput {
@@ -117,7 +157,7 @@ $kategori_list = mysqli_query($db, "SELECT DISTINCT kategori FROM menu WHERE kat
                     id="searchInput">
 
                 <!-- Box Kategori -->
-                <div class="d-flex justify-content-end mt-2">
+                <div class="d-flex justify-content-end mt-4">
                     <select id="kategoriFilter" class="form-select w-auto">
                         <option value="">Semua Kategori</option>
                         <option value="makanan">Makanan</option>
@@ -127,7 +167,7 @@ $kategori_list = mysqli_query($db, "SELECT DISTINCT kategori FROM menu WHERE kat
             </div>
         </div>
 
-        <!-- 🔹 JavaScript Filter -->
+        <!-- 🔹 JavaScript Filter kategori -->
         <script>
             const searchInput = document.getElementById("searchInput");
             const kategoriFilter = document.getElementById("kategoriFilter");
@@ -165,9 +205,16 @@ $kategori_list = mysqli_query($db, "SELECT DISTINCT kategori FROM menu WHERE kat
                                 <p class="card-text text-primary fw-bold">
                                     Rp. <?= number_format($p['harga'], 0, ',', '.'); ?>
                                 </p>
+                                <p class="btn btn-primary btn-stock">
+                                    Stok: <?= $p['stok']; ?>
+                                </p>
                                 <div class="mt-auto d-flex justify-content-between">
-                                    <a href="edit_menu.php?id=<?= $p['id']; ?>"
-                                        class="btn btn-warning btn-sm w-50 me-1">Update</a>
+                                    <!-- Tombol Update buka modal -->
+                                    <button class="btn btn-warning btn-sm w-50 me-1"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editModal<?= $p['id']; ?>">
+                                        Update
+                                    </button>
                                     <a href="product_admin.php?delete=<?= $p['id']; ?>"
                                         class="btn btn-danger btn-sm w-50 ms-1"
                                         onclick="return confirm('Yakin mau hapus produk ini?')">Hapus</a>
@@ -175,6 +222,78 @@ $kategori_list = mysqli_query($db, "SELECT DISTINCT kategori FROM menu WHERE kat
                             </div>
                         </div>
                     </div>
+
+                    <!-- 🔹 Modal Edit Produk -->
+                    <div class="modal fade" id="editModal<?= $p['id']; ?>" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-md modal-dialog-centered">
+                            <div class="modal-content">
+                                <form method="POST" enctype="multipart/form-data">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Edit Produk <?= $p['nama']; ?></h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <input type="hidden" name="id" value="<?= $p['id']; ?>">
+
+                                        <div class="mb-3">
+                                            <label>Nama Produk</label>
+                                            <input type="text" name="nama" class="form-control" value="<?= $p['nama']; ?>" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label>Harga</label>
+                                            <input type="number" name="harga" class="form-control" value="<?= $p['harga']; ?>" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label>Deskripsi</label>
+                                            <input type="text" name="deskripsi" class="form-control" value="<?= $p['deskripsi']; ?>" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label>Stok</label>
+                                            <input type="number" name="stok" class="form-control" value="<?= $p['stok']; ?>" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label>Gambar Produk</label><br>
+                                            <!-- 🔹 Gambar lama juga jadi preview -->
+                                            <img id="previewImage<?= $p['id']; ?>"
+                                                src="koneksi/unggahan/<?= $p['gambar']; ?>"
+                                                alt="<?= $p['nama']; ?>"
+                                                width="120"
+                                                class="rounded mb-2">
+
+                                            <input type="file"
+                                                name="gambar"
+                                                accept="image/*"
+                                                class="form-control"
+                                                id="gambarInput<?= $p['id']; ?>">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="submit" name="update" class="btn btn-primary">Update</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                        document.getElementById("gambarInput<?= $p['id']; ?>").addEventListener("change", function(event) {
+                            const file = event.target.files[0];
+                            const preview = document.getElementById("previewImage<?= $p['id']; ?>");
+
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onload = function(e) {
+                                    preview.src = e.target.result; // langsung ganti gambar lama
+                                }
+                                reader.readAsDataURL(file);
+                            }
+                        });
+                    </script>
                 <?php }
             } else { ?>
                 <div class="col-12">
@@ -184,6 +303,7 @@ $kategori_list = mysqli_query($db, "SELECT DISTINCT kategori FROM menu WHERE kat
                 </div>
             <?php } ?>
         </div>
+
     </div>
 
     <hr>

@@ -56,75 +56,95 @@ $result = $db->query($query);
     <title>Elkusa Cafe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
+    <link rel="icon" type="image/png" href="assets/image/logo_cafe.png">
 </head>
+<style>
+    body {
+        min-height: 100vh;
+        /* set tinggi minimum layar penuh */
+        display: flex;
+        flex-direction: column;
+        /* susun vertikal */
+    }
+
+    main {
+        flex: 1;
+        /* biar isi konten dorong footer ke bawah */
+    }
+</style>
 
 <body>
     <?php include "header.php"; ?>
-    <div class="container mt-4">
 
-        <h3 class="mb-4 text-center">Rekap Pesanan Lunas</h3>
+    <main>
+        <div class="container mt-4">
+            <h3 class="mb-4 text-center">Rekap Pesanan Lunas</h3>
 
-        <!-- Filter Form -->
-        <form method="get" class="row g-2 mb-3">
-            <div class="col-auto">
-                <select name="tipe" class="form-select" onchange="this.form.submit()">
-                    <option value="bulanan" <?= $tipe == 'bulanan' ? 'selected' : '' ?>>Bulanan</option>
-                    <option value="harian" <?= $tipe == 'harian' ? 'selected' : '' ?>>Harian</option>
-                </select>
+            <!-- Filter Form -->
+            <form method="get" class="row g-2 mb-3">
+                <div class="col-auto">
+                    <select name="tipe" class="form-select" onchange="this.form.submit()">
+                        <option value="bulanan" <?= $tipe == 'bulanan' ? 'selected' : '' ?>>Bulanan</option>
+                        <option value="harian" <?= $tipe == 'harian' ? 'selected' : '' ?>>Harian</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <?php if ($tipe == 'bulanan'): ?>
+                        <input type="month" name="bulan" value="<?= $bulan_aktif ?>" class="form-control" onchange="this.form.submit()">
+                    <?php else: ?>
+                        <input type="date" name="tanggal" value="<?= $tanggal_aktif ?>" class="form-control" onchange="this.form.submit()">
+                    <?php endif; ?>
+                </div>
+            </form>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <!-- Tombol Export -->
+                <a href="export_rekap_penjualan.php"
+                    class="btn btn-success mb-3">⬇ Export Excel</a>
+
+                <!-- Total Pendapatan -->
+                <h5 class="mb-0">
+                    Total Pendapatan:
+                    <span class="text-dark">Rp <?= number_format($total_pendapatan, 0, ',', '.') ?></span>
+                </h5>
             </div>
-            <div class="col-auto">
-                <?php if ($tipe == 'bulanan'): ?>
-                    <input type="month" name="bulan" value="<?= $bulan_aktif ?>" class="form-control" onchange="this.form.submit()">
-                <?php else: ?>
-                    <input type="date" name="tanggal" value="<?= $tanggal_aktif ?>" class="form-control" onchange="this.form.submit()">
-                <?php endif; ?>
-            </div>
-        </form>
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <!-- Tombol Export -->
-            <a href="export_rekap_penjualan.php"
-                class="btn btn-success mb-3">⬇ Export Excel</a>
-
-            <!-- Total Pendapatan -->
-            <h5 class="mb-0">
-                Total Pendapatan:
-                <span class="text-dark">Rp <?= number_format($total_pendapatan, 0, ',', '.') ?></span>
-            </h5>
-        </div>
-
-        <!-- Tabel Rekap -->
-        <table class="table table-bordered table-striped">
-            <thead class="table-primary text-center">
-                <tr>
-                    <th>Meja</th>
-                    <th>Jam</th>
-                    <th>Menu</th>
-                    <th>Jumlah</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if ($result->num_rows > 0): ?>
-                    <?php while ($row = $result->fetch_assoc()): ?>
-                        <tr>
-                            <td class="text-center"><?= $row['meja'] ?></td>
-                            <td class="text-center"><?= $row['jam_menit'] ?></td>
-                            <td><?= $row['menu_list'] ?></td>
-                            <td class="text-center"><?= $row['total_jumlah'] ?></td>
-                            <td class="text-end"><?= number_format($row['total_harga'], 0, ',', '.') ?></td>
-                        </tr>
-                    <?php endwhile; ?>
-                <?php else: ?>
+            <!-- Tabel Rekap -->
+            <table class="table table-bordered table-striped">
+                <thead class="table-primary text-center">
                     <tr>
-                        <td colspan="5" class="text-center">Tidak ada data</td>
+                        <th>Meja</th>
+                        <th>Jam</th>
+                        <th>Menu</th>
+                        <th>Jumlah</th>
+                        <th>Total</th>
                     </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
-
-    </div>
+                </thead>
+                <tbody>
+                    <?php if ($result->num_rows > 0): ?>
+                        <?php while ($row = $result->fetch_assoc()): ?>
+                            <tr>
+                                <td class="text-center"><?= $row['meja'] ?></td>
+                                <td class="text-center"><?= $row['jam_menit'] ?></td>
+                                <td><?= $row['menu_list'] ?></td>
+                                <td class="text-center"><?= $row['total_jumlah'] ?></td>
+                                <td class="text-end"><?= number_format($row['total_harga'], 0, ',', '.') ?></td>
+                            </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="5" class="text-center">Tidak ada data</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </main>
+    <!-- Footer -->
+    <hr class="border border-dark border-1">
+    <footer class="bg-light text-center py-4">
+        <p class="mb-0">© 2025 masdhanar | Elkusa Cafe </p>
+    </footer>
 </body>
 
 </html>

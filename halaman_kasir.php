@@ -14,7 +14,7 @@ if (isset($_POST['aksi']) && $_POST['aksi'] == "bayar") {
     $meja = $_POST['meja'];
     $jam_menit = $_POST['jam_menit'];
     $bayar = intval($_POST['bayar']);
-    $diskon = intval($_POST['diskon']); 
+    $diskon = intval($_POST['diskon']);
 
     $q = $db->query("
         SELECT SUM(total_harga) as total_harga, MAX(tanggal) as tanggal
@@ -27,7 +27,7 @@ if (isset($_POST['aksi']) && $_POST['aksi'] == "bayar") {
     $total_setelah_diskon = $total - ($total * $diskon / 100);
 
     if ($bayar < $total_setelah_diskon) {
-        echo "<script>alert('Uang bayar kurang dari total belanja!'); window.location='kasir.php';</script>";
+        echo "<script>alert('Uang bayar kurang dari total belanja!'); window.location='halaman_kasir.php';</script>";
         exit;
     }
 
@@ -39,29 +39,64 @@ if (isset($_POST['aksi']) && $_POST['aksi'] == "bayar") {
     exit;
 }
 
-// ================== Query TAMPILAN KASIR ==================
-$query = "
-    SELECT 
-        r.meja,
-        DATE_FORMAT(r.tanggal, '%H:%i') AS jam_menit,
-        GROUP_CONCAT(CONCAT(m.nama, ' (', r.jumlah, ')') SEPARATOR ', ') AS daftar_pesanan,
-        SUM(r.total_harga) AS total_harga
-    FROM rekap_penjualan r
-    JOIN menu m ON r.product_id = m.id
-    WHERE r.status = 'BELUM'
-    GROUP BY r.meja, jam_menit
-    ORDER BY MAX(r.tanggal) DESC
-";
-$result = $db->query($query);
+// ================== MODE TABEL SAJA (AJAX) ==================
+if (isset($_GET['mode']) && $_GET['mode'] === 'table') {
+    $query = "
+        SELECT 
+            r.meja,
+            DATE_FORMAT(r.tanggal, '%H:%i') AS jam_menit,
+            GROUP_CONCAT(CONCAT(m.nama, ' (', r.jumlah, ')') SEPARATOR ', ') AS daftar_pesanan,
+            SUM(r.total_harga) AS total_harga
+        FROM rekap_penjualan r
+        JOIN menu m ON r.product_id = m.id
+        WHERE r.status = 'BELUM'
+        GROUP BY r.meja, jam_menit
+        ORDER BY MAX(r.tanggal) DESC
+    ";
+    $result = $db->query($query);
+
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            echo "<tr>
+                    <td class='text-center'>{$row['meja']}</td>
+                    <td class='text-center'>{$row['jam_menit']}</td>
+                    <td>{$row['daftar_pesanan']}</td>
+                    <td class='text-start'>Rp " . number_format($row['total_harga'], 0, ',', '.') . "</td>
+                    <td class='text-center'>
+                        <button class='btn btn-success btn-sm'
+                            onclick=\"pembayaran('{$row['meja']}', '{$row['jam_menit']}', {$row['total_harga']})\">
+                            Pembayaran
+                        </button>
+                    </td>
+                </tr>";
+        }
+    } else {
+        echo "<tr><td colspan='5' class='text-center'>Belum ada pesanan</td></tr>";
+    }
+    exit; // hentikan supaya tidak render full HTML
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <title>Elkusa Cafe</title>
-    
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="icon" type="image/png" href="assets/image/logo_cafe.png">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        main {
+            flex: 1;
+        }
+    </style>
     <script>
         function pembayaran(meja, jam_menit, total) {
             let diskon = prompt("Masukkan diskon (%) jika ada:", "0");
@@ -95,80 +130,104 @@ $result = $db->query($query);
 
             rows.forEach(row => {
                 let text = row.innerText.toLowerCase();
-                if (text.includes(input)) {
-                    row.style.display = "";
-                } else {
-                    row.style.display = "none";
-                }
+                row.style.display = text.includes(input) ? "" : "none";
             });
         }
+
+        // 🔄 Reload tabel otomatis
+        function loadTabelKasir() {
+            fetch("halaman_kasir.php?mode=table")
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById("kasirBody").innerHTML = data;
+                    cariData(); // tetap filter jika user sedang mencari
+                });
+        }
+
+        setInterval(loadTabelKasir, 5000); // reload tiap 5 detik
     </script>
 </head>
+
 <body>
     <?php include "head_kasir_pelayan.php"; ?>
+    <main>
+        <div class="bg-light">
+            <form method="POST" id="formBayar" style="display:none;">
+                <input type="hidden" name="aksi" value="bayar">
+                <input type="hidden" name="meja">
+                <input type="hidden" name="jam_menit">
+                <input type="hidden" name="bayar">
+                <input type="hidden" name="diskon">
+            </form>
 
-    <div class="bg-light">
-        <form method="POST" id="formBayar" style="display:none;">
-            <input type="hidden" name="aksi" value="bayar">
-            <input type="hidden" name="meja">
-            <input type="hidden" name="jam_menit">
-            <input type="hidden" name="bayar">
-            <input type="hidden" name="diskon">
-        </form>
-
-        <div class="container-lg mt-4 mb-5">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-start">
-                    <h4 class="mb-0"> Kasir</h4>
-                </div>
-                <div class="card-body">
-
-                    <!-- 🔎 Input Pencarian -->
-                    <div class="mb-3">
-                        <input type="text" id="searchInput" class="form-control" placeholder="Cari meja, jam, atau pesanan..." onkeyup="cariData()">
+            <div class="container-lg mt-4 mb-5">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-start">
+                        <h4 class="mb-0"> Kasir</h4>
                     </div>
+                    <div class="card-body">
 
-                    <table class="table table-bordered table-striped align-middle" id="kasirTable">
-                        <thead>
-                            <tr>
-                                <th class="text-center">Meja</th>
-                                <th class="text-center">Jam Pesan</th>
-                                <th class="text-center">Daftar Pesanan</th>
-                                <th class="text-center">Total Harga</th>
-                                <th class="text-center">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if ($result && $result->num_rows > 0): ?>
-                                <?php while ($row = $result->fetch_assoc()): ?>
-                                    <tr>
-                                        <td class="text-center"><?= $row['meja']; ?></td>
-                                        <td class="text-center"><?= $row['jam_menit']; ?></td>
-                                        <td><?= $row['daftar_pesanan']; ?></td>
-                                        <td class="text-start">Rp <?= number_format($row['total_harga'], 0, ',', '.'); ?></td>
-                                        <td class="text-center">
-                                            <button class="btn btn-success btn-sm"
-                                                onclick="pembayaran('<?= $row['meja']; ?>', '<?= $row['jam_menit']; ?>', <?= $row['total_harga']; ?>)">
-                                                Pembayaran
-                                            </button>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            <?php else: ?>
+                        <!-- 🔎 Input Pencarian -->
+                        <div class="mb-3">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Cari meja, jam, atau pesanan..." onkeyup="cariData()">
+                        </div>
+
+                        <table class="table table-bordered table-striped align-middle" id="kasirTable">
+                            <thead>
                                 <tr>
-                                    <td colspan="5" class="text-center">Belum ada pesanan</td>
+                                    <th class="text-center">Meja</th>
+                                    <th class="text-center">Jam Pesan</th>
+                                    <th class="text-center">Daftar Pesanan</th>
+                                    <th class="text-center">Total Harga</th>
+                                    <th class="text-center">Aksi</th>
                                 </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody id="kasirBody">
+                                <?php
+                                $query = "
+        SELECT 
+            r.meja,
+            DATE_FORMAT(r.tanggal, '%H:%i') AS jam_menit,
+            GROUP_CONCAT(CONCAT(m.nama, ' (', r.jumlah, ')') SEPARATOR ', ') AS daftar_pesanan,
+            SUM(r.total_harga) AS total_harga
+        FROM rekap_penjualan r
+        JOIN menu m ON r.product_id = m.id
+        WHERE r.status = 'BELUM'
+        GROUP BY r.meja, jam_menit
+        ORDER BY MAX(r.tanggal) DESC
+    ";
+                                $result = $db->query($query);
+
+                                if ($result && $result->num_rows > 0) {
+                                    while ($row = $result->fetch_assoc()) {
+                                        echo "<tr>
+                                            <td class='text-center'>{$row['meja']}</td>
+                                            <td class='text-center'>{$row['jam_menit']}</td>
+                                            <td>{$row['daftar_pesanan']}</td>
+                                            <td class='text-start'>Rp " . number_format($row['total_harga'], 0, ',', '.') . "</td>
+                                            <td class='text-center'>
+                                                <button class='btn btn-success btn-sm'
+                                                    onclick=\"pembayaran('{$row['meja']}', '{$row['jam_menit']}', {$row['total_harga']})\">
+                                                    Pembayaran
+                                                </button>
+                                            </td>
+                                            </tr>";
+                                    }
+                                } else {
+                                    echo "<tr><td colspan='5' class='text-center'>Belum ada pesanan</td></tr>";
+                                }
+                                ?>
+                            </tbody>
+
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <hr>
-        <footer class="bg-light text-center py-4">
-            <p class="mb-0">© 2025 masdhanar | Elkusa Cafe </p>
-        </footer>
-    </div>
+    </main>
+    <hr>
+    <footer class="bg-light text-center py-4">
+        <p class="mb-0">© 2025 masdhanar | Elkusa Cafe </p>
+    </footer>
 </body>
+
 </html>
