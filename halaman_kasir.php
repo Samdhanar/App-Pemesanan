@@ -98,6 +98,8 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'table') {
         }
     </style>
     <script>
+        
+        // Pembayaran
         function pembayaran(meja, jam_menit, total) {
             let diskon = prompt("Masukkan diskon (%) jika ada:", "0");
             if (diskon === null || isNaN(diskon) || diskon < 0) diskon = 0;

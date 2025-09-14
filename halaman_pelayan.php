@@ -126,6 +126,11 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'table') {
             <div class="page-wrapper position-relative">
                 <h2 class="page-title"> Pelayan</h2>
 
+                <!-- Input Pencarian -->
+                <div class="mb-3">
+                    <input type="text" id="cariPesanan" class="form-control" placeholder="Cari pesanan, meja, atau jam...">
+                </div>
+
                 <!-- Tabel Pesanan -->
                 <table class="table table-bordered table-striped align-middle">
                     <thead class="table-primary text-center">
@@ -182,7 +187,6 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'table') {
                         }
                         ?>
                     </tbody>
-
                 </table>
             </div>
     </main>
@@ -193,16 +197,32 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'table') {
         <p class="mb-0">© 2025 masdhanar | Elkusa Cafe </p>
     </footer>
 
-    <!-- Script AJAX reload -->
+    <!-- Script AJAX reload + Live Search -->
     <script>
+        // Fungsi reload tabel via AJAX
         function reloadTabel() {
             fetch("halaman_pelayan.php?mode=table")
                 .then(res => res.text())
                 .then(html => {
                     document.getElementById("tabelPesanan").innerHTML = html;
+                    applyFilter(); // tetap filter setelah reload
                 });
         }
         setInterval(reloadTabel, 5000); // reload tiap 5 detik
+
+        // Fungsi filter pencarian
+        function applyFilter() {
+            let input = document.getElementById("cariPesanan").value.toLowerCase();
+            let rows = document.querySelectorAll("#tabelPesanan tr");
+
+            rows.forEach(row => {
+                let text = row.innerText.toLowerCase();
+                row.style.display = text.includes(input) ? "" : "none";
+            });
+        }
+
+        // Event saat user mengetik
+        document.getElementById("cariPesanan").addEventListener("keyup", applyFilter);
     </script>
 </body>
 

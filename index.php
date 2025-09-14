@@ -311,7 +311,6 @@ $hero_data = [];
 </head>
 
 <body>
-    <!-- Navbar -->
     <!-- navbar -->
     <nav class="navbar navbar-expand-lg bg-light border sticky-top">
         <div class="container-lg">
@@ -423,7 +422,7 @@ $hero_data = [];
                             </div>
                             <div class="card-body text-center">
                                 <h5 class="card-title"><?php echo $p['nama']; ?></h5>
-                                <span class="badge bg-primary harga-badge">
+                                <span class="badge bg-primary harga-badge mt-2">
                                     Rp. <?php echo number_format($p['harga'], 0, ',', '.'); ?>
                                 </span>
                             </div>
@@ -443,10 +442,6 @@ $hero_data = [];
                                     <p><strong>Harga:</strong> Rp. <?= number_format($p['harga'], 0, ',', '.'); ?></p>
                                     <p><strong>Kategori:</strong> <?= $p['kategori']; ?></p>
                                     <p><strong>Deskripsi:</strong><br> <?= $p['deskripsi'] ?? 'Tidak ada deskripsi.'; ?></p>
-                                </div>
-                                <hr class="border border-secondary border-2">
-                                <div class="modal-footer">
-                                    <button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                                 </div>
                             </div>
                         </div>
