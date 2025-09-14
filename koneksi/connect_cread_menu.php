@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // pindahkan file ke folder
     if (move_uploaded_file($tmp, $pathFile)) {
         // simpan hanya nama file ke database
-        $sql = "INSERT INTO menu (nama, harga, kategori, stok, gambar) VALUES ('$nama', '$harga', '$kategori', '$stok', '$namaFile')";
+        $sql = "INSERT INTO menu (nama, harga, kategori, stok, deskripsi, gambar) VALUES ('$nama', '$harga', '$kategori', '$stok', '$namaFile')";
         $db->query($sql);
         echo "<script>alert('Menu berhasil ditambahkan!'); window.location='../product_admin.php';</script>";
     } else {
